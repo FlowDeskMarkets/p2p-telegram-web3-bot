@@ -1,10 +1,9 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext, MessageHandler, filters
 import json
-
-keys = json.load(open('api_keys.json'))
-TELEGRAM_TOKEN = keys["txgpt_token"]
-
+from dotenv import load_dotenv
+import gpt_module
+import os
 # Start command handler
 
 
@@ -29,8 +28,9 @@ async def handle_natural_language_message(update: Update, context: CallbackConte
 
 
 def main():
+    load_dotenv()
     # Create the Application and pass it your bot's token
-    application = Application.builder().token(TELEGRAM_TOKEN).build()
+    application = Application.builder().token(os.environ['TXGPT_TOKEN']).build()
 
     # Add handlers for the /start and /help commands
     application.add_handler(CommandHandler("start", start))
