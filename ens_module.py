@@ -10,14 +10,14 @@ global web3
 global resolver_contract
 global account
 global private_key
-global registry_contract
+global name_wrapper_contract
 
 # Parent domain and subdomain details
 parent_domain = "txgpt.eth"
 # ENS Resolver contract address for Sepolia (testnet)
 resolver_address = '0x8FADE66B79cC9f707aB26799354482EB93a5B7dD'
 # ENS Registry contract address for Sepolia (testnet)
-registry_address = '0x0635513f179D50A207757E05759CbD106d7dFcE8'
+name_wrapper_address = '0x0635513f179D50A207757E05759CbD106d7dFcE8'
 
 def namehash(name):
     """Generates the ENS namehash for a given domain."""
@@ -36,7 +36,7 @@ def init():
     global resolver_contract
     global account
     global private_key
-    global registry_contract
+    global name_wrapper_contract
     infura_url = "https://sepolia.infura.io/v3/" + os.environ['INFURA_TOKEN']
     web3 = Web3(Web3.HTTPProvider(infura_url))
 
@@ -55,11 +55,11 @@ def init():
     # Create contract instance
     resolver_contract = web3.eth.contract(address=resolver_address, abi=ens_abi.resolver_abi)
     # Create contract instance
-    registry_contract = web3.eth.contract(address=registry_address, abi=ens_abi.ens_registry_abi)
+    name_wrapper_contract = web3.eth.contract(address=name_wrapper_address, abi=ens_abi.ens_name_wrapper_abi)
 
 # Create the subdomain
 def set_text_record(subdomain: str, key: str, value: str):
-    subdomain_label_hash = keccak(text=subdomain)
+    subdomain_label_hash = keccak(text=str(subdomain))
     subdomain_node = Web3.solidity_keccak(['bytes32', 'bytes32'], [parent_node, subdomain_label_hash])
 
     transaction = resolver_contract.functions.setText(
@@ -84,10 +84,9 @@ def set_text_record(subdomain: str, key: str, value: str):
     return tx_receipt
 
 def create_subdomain(subdomain: str):
-    print(parent_node)
-    transaction = registry_contract.functions.setSubnodeRecord(
-        '0x0a0a772cb436ebd8dcc04ce9d1a09ce1b33d0c396c7fe75a5542733cd9697ab3',
-        subdomain,  # label of the subdomain
+    transaction = name_wrapper_contract.functions.setSubnodeRecord(
+        parent_node,
+        str(subdomain),  # label of the subdomain
         account.address,  # owner address of the new subdomain
         resolver_address,  # resolver address
         0,  # time-to-live
@@ -108,5 +107,4 @@ def create_subdomain(subdomain: str):
 
     # Wait for the transaction to be mined
     tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-    print('fadsjknsdfjklnsadklfjn')
     return tx_receipt
