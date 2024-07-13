@@ -44,7 +44,6 @@ import ens_module
 
 
 import base64
-import codecs
 
 # Installed by `pip install pycryptodome`
 from Crypto.PublicKey import RSA
@@ -62,10 +61,9 @@ global gpt_client
 global circle_client
 global circle_wallet_set_id
 
-
 def lookup_wallet_uuid(tg_user_id: str, chain: str) -> str:
     print(f"getting wallet uuid for {tg_user_id}")
-    return ns.get_text(f"{tg_user_id}.txgpt.eth", "uid")
+    return ns.get_text(f"{tg_user_id}.{ens_module.parent_domain}", chain)
 
 
 def add_wallet_to_ens(tg_user_id: str, wallet_uuid: str):
@@ -114,9 +112,6 @@ async def start(update: Update, context: CallbackContext) -> None:
         "Would you like to create wallets now?",
         reply_markup=reply_markup)
     
-    # await update.message.reply_text(
-    #     "Hello! I am TxGPT Bot, your friendly AI assistant designed to make blockchain transactions easy and accessible! Your account is already ready to use !"
-    # )
 
 # Callback query handler for wallet creation decision
 async def handle_wallet_creation_decision(update: Update, context: CallbackContext) -> None:
@@ -126,6 +121,12 @@ async def handle_wallet_creation_decision(update: Update, context: CallbackConte
     tg_user_id = query.from_user.id
 
     if query.data == 'create_wallets_yes':
+        tg_user_id = update.callback_query.from_user.id
+        wallet_uuid = lookup_wallet_uuid(tg_user_id, 'MATIC-AMOY')
+        print(f"found wallet uuid for {tg_user_id} on MATIC-AMOY: {wallet_uuid}")
+        if wallet_uuid is not None and len(wallet_uuid) != 0:
+            await query.edit_message_text(text="You already have wallets created! 🎉")
+            return
         await query.edit_message_text(text="Great! Let's create some wallets for you. 🔨")
         await asyncio.sleep(10)  # Simulate a brief delay
         # Send friendly messages during the process

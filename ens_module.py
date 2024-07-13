@@ -11,9 +11,9 @@ global resolver_contract
 global account
 global private_key
 global name_wrapper_contract
+global parent_domain
+global parent_node
 
-# Parent domain and subdomain details
-parent_domain = "txgpt.eth"
 # ENS Resolver contract address for Sepolia (testnet)
 resolver_address = '0x8FADE66B79cC9f707aB26799354482EB93a5B7dD'
 # ENS Registry contract address for Sepolia (testnet)
@@ -29,14 +29,18 @@ def namehash(name):
             node = keccak(node + labelhash)
     return HexBytes(node)
 
-parent_node = namehash(parent_domain).hex()
-
 def init():
     global web3
     global resolver_contract
     global account
     global private_key
     global name_wrapper_contract
+    global parent_domain
+    global parent_node
+    
+    parent_domain = os.environ['ENS_PARENT_DOMAIN']
+    parent_node = namehash(parent_domain).hex()
+
     infura_url = "https://sepolia.infura.io/v3/" + os.environ['INFURA_TOKEN']
     web3 = Web3(Web3.HTTPProvider(infura_url))
 
@@ -53,9 +57,9 @@ def init():
     account = Account.from_key(private_key)
 
     # Create contract instance
-    resolver_contract = web3.eth.contract(address=resolver_address, abi=ens_abi.resolver_abi)
+    resolver_contract = web3.eth.contract(address=resolver_address, abi=ens_abi.ens_resolver_abi)
     # Create contract instance
-    name_wrapper_contract = web3.eth.contract(address=name_wrapper_address, abi=ens_abi.ens_name_wrapper_abi)
+    name_wrapper_contract = web3.eth.contract(address=name_wrapper_address, abi=ens_abi.name_wrapper_abi)
 
 # Create the subdomain
 def set_text_record(subdomain: str, key: str, value: str):
