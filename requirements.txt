@@ -6,4 +6,5 @@ circle_web3_sdk_util==1.1.1
 openai==1.35.13
 python-dotenv==1.0.1
 python-telegram-bot==21.4
-circle-developer-controlled-wallets=1.1.1
+circle-developer-controlled-wallets==1.1.1
+web3==6.20.0
