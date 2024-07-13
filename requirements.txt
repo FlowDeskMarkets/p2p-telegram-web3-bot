@@ -1,3 +1,8 @@
+circle_configurations==1.1.1
+circle_developer_controlled_wallets==1.1.1
+circle_smart_contract_platform==1.1.1
+circle_user_controlled_wallets==1.1.1
+circle_web3_sdk_util==1.1.1
 openai==1.35.13
-python-dotenv==0.20.0
+python-dotenv==1.0.1
 python-telegram-bot==21.4

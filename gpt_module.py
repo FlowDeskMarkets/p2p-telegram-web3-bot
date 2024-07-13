@@ -16,24 +16,23 @@ class GptClient():
             {"role": "system", "content": "You are a helpful assistant designed to output JSON."},
             {"role": "user", "content": "Transfer 1 btc to Tony"},
             {"role": "assistant", "content": json.dumps({
-                "transaction": {
+                    "transaction": "transfer",
                     "amount": 1,
                     "currency": "BTC",
+                    "to": "Tony",
                     "note": "Transfer 3 BTC to Tony"
-                }
                 })
-            },
-            {"role": "user", "content": "Buy 2 eth from uniswap"},
-            {"role": "assistant", "content": json.dumps({
-                "buy": {
-                    "provider": "uniswap",
-                    "amount": 2,
-                    "currency": "ETH",
-                    "note": "Buy 1 eth from uniswap"
-                }
-                })
-            },
-            {"role": "user", "content": f"{prompt}"},
+            }
+            # {"role": "user", "content": "Buy 2 eth from uniswap"},
+            # {"role": "assistant", "content": json.dumps({
+            #     "transaction": "swap",
+            #     "provider": "uniswap",
+            #     "amount": 2,
+            #     "currency": "ETH",
+            #     "note": "Buy 1 eth from uniswap"
+            #     })
+            # },
+            # {"role": "user", "content": f"{prompt}"},
             
         ]
         )
