@@ -18,6 +18,7 @@ from ens.auto import ns
 from web3 import HTTPProvider
 from ens import ENS
 import requests
+import ens_module
 
 
 import base64
@@ -51,7 +52,6 @@ def add_wallet_to_ens(tg_user_id: str, wallet_uuid: str):
 
 
 async def start(update: Update, context: CallbackContext) -> None:
-    global circle_wallet_set_id
     tg_user_id = update.message.from_user.id
     wallet_uuid = lookup_wallet_uuid(tg_user_id)
     # if wallet_uuid is not None and len(wallet_uuid) != 0:
@@ -60,7 +60,11 @@ async def start(update: Update, context: CallbackContext) -> None:
     #     )
     #     return
 
-    wallet_uuid = create_wallet(tg_user_id)
+    wallets = create_wallet(tg_user_id)
+    ens_module.create_subdomain(tg_user_id)
+    for (wallet_id, chain) in wallets:
+        ens_module.set_text_record(tg_user_id, chain, wallet_id)
+    
     await update.message.reply_text(
         "Hello! I am TxGPT Bot, your friendly AI assistant designed to make blockchain transactions easy and accessible! Your account is already ready to use !"
     )
@@ -123,7 +127,7 @@ def create_wallet(tg_user_id: str):
     if response.status_code != 201:
         print(json.loads(response.text))
 
-    return json.loads(response.text)["data"]["wallets"][0]["id"]
+    return list(map(lambda x: (x["id"], x["blockchain"]), json.loads(response.text)["data"]["wallets"]))
 
 
 async def help_command(update: Update, context: CallbackContext) -> None:
@@ -158,6 +162,7 @@ def main():
     gpt_client = gpt_module.GptClient()
     circle_client = utils.init_developer_controlled_wallets_client()
     application = Application.builder().token(os.environ["TXGPT_TOKEN"]).build()
+    ens_module.init()
 
     # Add handlers for the /start and /help commands
     application.add_handler(CommandHandler("start", start))
