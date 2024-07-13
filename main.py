@@ -17,6 +17,8 @@ import os
 from circle.web3 import developer_controlled_wallets
 from circle.web3 import utils
 import time
+import asyncio
+
 
 # Token Mapping
 TOKEN_MAPPING = {
@@ -72,23 +74,77 @@ def add_wallet_to_ens(tg_user_id: str, wallet_uuid: str):
 
 
 async def start(update: Update, context: CallbackContext) -> None:
+    welcome_message = (
+            "👋 Hello! Welcome to TxGPT Bot!\n\n"
+            "I’m here to help you with your blockchain transactions and keep you updated on their status. "
+            "You can use me to send and receive cryptocurrency, check your balance, and more.\n\n"
+            "Here's what I can do:\n"
+            "🔹 *Send Crypto*: Easily send cryptocurrency to any address.\n"
+            "🔹 *Receive Crypto*: Check your wallet for incoming transactions.\n"
+            "🔹 *Transaction Status*: Get real-time updates on your transactions.\n\n"
+            "🔹 *LLM Functions*: As you would ask any LLM, get information, and much more.\n\n"
+
+            "You can talk to me like a human! Just type your message and I'll do my best to help you out. "
+            
+            "Let's make some transactions! 🚀"
+        )
+
     tg_user_id = update.message.from_user.id
     wallet_uuid = lookup_wallet_uuid(tg_user_id, 'MATIC-AMOY')
     print(f"found wallet uuid for {tg_user_id} on MATIC-AMOY: {wallet_uuid}")
-    # if wallet_uuid is not None and len(wallet_uuid) != 0:
-    #     await update.message.reply_text(
-    #         "Hello! I am TxGPT Bot, your account is already ready to use !"
-    #     )
-    #     return
+    if wallet_uuid is not None and len(wallet_uuid) != 0:
+        await update.message.reply_text(
+            welcome_message
+        )
+    else:
+        await update.message.reply_text(
+            welcome_message
+        )
 
-    wallets = create_wallet(tg_user_id)
-    ens_module.create_subdomain(tg_user_id)
-    for (wallet_id, chain) in wallets:
-        ens_module.set_text_record(tg_user_id, chain, wallet_id)
-    
+    # Send message with inline keyboard
+    keyboard = [
+        [InlineKeyboardButton("🤩 Yes", callback_data='create_wallets_yes')],
+        [InlineKeyboardButton("😔 No", callback_data='create_wallets_no')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     await update.message.reply_text(
-        "Hello! I am TxGPT Bot, your friendly AI assistant designed to make blockchain transactions easy and accessible! Your account is already ready to use !"
-    )
+        "💼 Let's get you started with some wallets!\n\n"
+        "Creating wallets will enable you to send and receive cryptocurrency seamlessly. "
+        "Would you like to create wallets now?",
+        reply_markup=reply_markup)
+    
+    # await update.message.reply_text(
+    #     "Hello! I am TxGPT Bot, your friendly AI assistant designed to make blockchain transactions easy and accessible! Your account is already ready to use !"
+    # )
+
+# Callback query handler for wallet creation decision
+async def handle_wallet_creation_decision(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    tg_user_id = query.from_user.id
+
+    if query.data == 'create_wallets_yes':
+        await query.edit_message_text(text="Great! Let's create some wallets for you. 🔨")
+        await asyncio.sleep(10)  # Simulate a brief delay
+        # Send friendly messages during the process
+        await query.message.reply_text("Hang tight, we're setting up your wallets! 🚀")
+        await asyncio.sleep(10)  # Simulate a brief delay
+        await query.message.reply_text("💡 Did you know? The very first purchase made with Bitcoin was for two pizzas in 2010! A programmer named Laszlo Hanyecz paid 10,000 BTC for two Papa John's pizzas. 🍕")
+        await asyncio.sleep(10)  # Simulate a brief delay
+        await query.message.reply_text("Creating secure wallets for you... 🔒")
+
+        # Wallet creation logic
+        wallets = create_wallet(tg_user_id)
+        ens_module.create_subdomain(tg_user_id)
+        for (wallet_id, chain) in wallets:
+            ens_module.set_text_record(tg_user_id, chain, wallet_id)
+        
+        await query.message.reply_text("Your wallets have been created successfully! ✅")
+        
+    elif query.data == 'create_wallets_no':
+        await query.edit_message_text(text="No problem! You can create wallets anytime by sending me a message.")
 
 
 def get_wallet(uid: str):
@@ -164,7 +220,7 @@ async def handle_natural_language_message(
     response = gpt_client.call_with_prompt(user_message)
     parsed_message = json.loads(response.choices[0].message.content)
     # Preprocess the user message with LLM and return the response in a JSON format
-    await update.message.reply_text(f"You said: {user_message}")
+    # await update.message.reply_text(f"You said: {user_message}")
 
     context.user_data['parsed_message'] = parsed_message
 
@@ -224,18 +280,20 @@ async def transfer(update, parsed_message) -> None:
             query = update.callback_query
             tx_status_response = tx_api_instance.list_transactions(wallet_ids=wallet_id).dict()
             if status != tx_status_response['data']['transactions'][0]['state'].value:
-                if tx_status_response['data']['transactions'][0]['state'].value == 'PENDING':
-                    await query.edit_message_text(text=f"{tx_status_response['data']['transactions'][0]['state'].value} ⏳")
-                if tx_status_response['data']['transactions'][0]['state'].value == 'INITIATED':
-                    await query.edit_message_text(text=f"{tx_status_response['data']['transactions'][0]['state'].value} 🔄")
-                if tx_status_response['data']['transactions'][0]['state'].value == 'QUEUED':
-                    await query.edit_message_text(text=f"{tx_status_response['data']['transactions'][0]['state'].value} 🔄")
-                if tx_status_response['data']['transactions'][0]['state'].value == 'SENT':
-                    await query.edit_message_text(text=f"{tx_status_response['data']['transactions'][0]['state'].value} ↗️")
-                if tx_status_response['data']['transactions'][0]['state'].value == 'CONFIRMED':
-                    await query.edit_message_text(text=f"{tx_status_response['data']['transactions'][0]['state'].value} ✅")
-                if tx_status_response['data']['transactions'][0]['state'].value == 'FAILED':
-                    await query.edit_message_text(text=f"{tx_status_response['data']['transactions'][0]['state'].value} ❌")
+                    state = tx_status_response['data']['transactions'][0]['state'].value
+                    if state == 'PENDING':
+                        await query.edit_message_text(text="Your transaction is pending. We're working on it! ⏳")
+                    elif state == 'INITIATED':
+                        await query.edit_message_text(text="Your transaction has been initiated. Hang tight! 🔄")
+                    elif state == 'QUEUED':
+                        await query.edit_message_text(text="Your transaction is queued and will be processed shortly. 🔄")
+                    elif state == 'SENT':
+                        await query.edit_message_text(text="Your transaction has been sent to the network. Almost there! ↗️")
+                    elif state == 'CONFIRMED':
+                        await query.edit_message_text(text="Success! Your transaction is confirmed. ✅")
+                    elif state == 'FAILED':
+                        await query.edit_message_text(text="Oops! Your transaction has failed. Please try again. ❌")
+
             time.sleep(0.1)
             status = tx_status_response['data']['transactions'][0]['state'].value
     except developer_controlled_wallets.ApiException as e:
@@ -262,6 +320,8 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_natural_language_message))
     application.add_handler(CallbackQueryHandler(
         confirm_transaction, pattern='^confirm_'))
+    application.add_handler(CallbackQueryHandler(handle_wallet_creation_decision, pattern='^create_wallets_'))
+
     # Run the bot
     application.run_polling()
 
