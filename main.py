@@ -224,13 +224,18 @@ async def handle_natural_language_message(
 
     context.user_data['parsed_message'] = parsed_message
 
-    if (parsed_message['transaction'] == 'transfer'):
-        keyboard = [
-            [InlineKeyboardButton("✅ Yes", callback_data='confirm_yes')],
-            [InlineKeyboardButton("❌ No", callback_data='confirm_no')],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(f"Do you want to {parsed_message['transaction']} {parsed_message['amount']} {parsed_message['currency']} to {parsed_message['to']}?", reply_markup=reply_markup)
+    if 'transaction' in parsed_message.keys():
+        if (parsed_message['transaction'] == 'transfer'):
+            keyboard = [
+                [InlineKeyboardButton("✅ Yes", callback_data='confirm_yes')],
+                [InlineKeyboardButton("❌ No", callback_data='confirm_no')],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text(f"Do you want to {parsed_message['transaction']} {parsed_message['amount']} {parsed_message['currency']} to {parsed_message['to']}?", reply_markup=reply_markup)
+    else:
+        # Normal chatgpt behaviour
+        response = gpt_client.call_with_prompt_normal(user_message)
+        await update.message.reply_text(response.choices[0].message.content)
 
 async def confirm_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query

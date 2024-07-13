@@ -23,17 +23,18 @@ class GptClient():
                     "note": "Transfer 3 BTC to Tony"
                 })
             },
-            # {"role": "user", "content": "Buy 2 eth from uniswap"},
-            # {"role": "assistant", "content": json.dumps({
-            #     "transaction": "swap",
-            #     "provider": "uniswap",
-            #     "amount": 2,
-            #     "currency": "ETH",
-            #     "note": "Buy 1 eth from uniswap"
-            #     })
-            # },
             {"role": "user", "content": f"{prompt}"},
             
         ]
+        )
+        return response
+    
+    def call_with_prompt_normal(self, prompt: str):
+        response = self.client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": f"{prompt}"},
+            ]
         )
         return response
