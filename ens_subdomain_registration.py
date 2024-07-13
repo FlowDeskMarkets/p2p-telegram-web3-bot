@@ -3,6 +3,7 @@ from web3 import Web3
 from eth_account import Account
 from web3.middleware import geth_poa_middleware
 from eth_utils import keccak
+from hexbytes import HexBytes
 
 # Load environment variables from .env file (optional)
 from dotenv import load_dotenv
@@ -44,7 +45,19 @@ subdomain_label = "6930658905"
 parent_node = keccak(text=parent_domain)
 subdomain_label_hash = keccak(text=subdomain_label)
 # parent_node = Web3.solidity_keccak(['bytes32', 'bytes32'], [b'\x00' * 32, parent_label_hash])
+def namehash(name):
+    """Generates the ENS namehash for a given domain."""
+    node = b'\x00' * 32
+    if name:
+        labels = name.split('.')
+        for label in reversed(labels):
+            labelhash = keccak(text=label)
+            node = keccak(node + labelhash)
+    return HexBytes(node)
 
+parent_node = namehash(parent_domain)
+print(parent_node.hex())
+exit()
 resolver_address="0x8FADE66B79cC9f707aB26799354482EB93a5B7dD"
 ttl = 0
 fuses = 0
