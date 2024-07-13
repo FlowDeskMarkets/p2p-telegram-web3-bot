@@ -54,11 +54,11 @@ async def start(update: Update, context: CallbackContext) -> None:
     global circle_wallet_set_id
     tg_user_id = update.message.from_user.id
     wallet_uuid = lookup_wallet_uuid(tg_user_id)
-    if wallet_uuid is not None and len(wallet_uuid) != 0:
-        await update.message.reply_text(
-            "Hello! I am TxGPT Bot, your account is already ready to use !"
-        )
-        return
+    # if wallet_uuid is not None and len(wallet_uuid) != 0:
+    #     await update.message.reply_text(
+    #         "Hello! I am TxGPT Bot, your account is already ready to use !"
+    #     )
+    #     return
 
     wallet_uuid = create_wallet(tg_user_id)
     await update.message.reply_text(
@@ -102,10 +102,13 @@ def create_wallet(tg_user_id: str):
     payload = {
         "idempotencyKey": str(uuid.uuid4()),
         "accountType": "SCA",
-        "blockchains": ["MATIC-AMOY"],
+        "blockchains": [
+            "MATIC-AMOY",
+            "ETH-SEPOLIA",
+        ],
         "count": 1,
         "entitySecretCiphertext": create_cipher_text(),
-        "metadata": [{"name": "MATIC-AMOY", "refId": f"{tg_user_id}"}],
+        "metadata": [{"name": f"{tg_user_id}", "refId": f"{tg_user_id}"}],
         "walletSetId": os.environ["CIRCLE_WALLET_SET_ID"],
     }
     headers = {
