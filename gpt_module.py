@@ -22,7 +22,7 @@ class GptClient():
                     "to": "Tony",
                     "note": "Transfer 3 BTC to Tony"
                 })
-            }
+            },
             # {"role": "user", "content": "Buy 2 eth from uniswap"},
             # {"role": "assistant", "content": json.dumps({
             #     "transaction": "swap",
@@ -32,7 +32,7 @@ class GptClient():
             #     "note": "Buy 1 eth from uniswap"
             #     })
             # },
-            # {"role": "user", "content": f"{prompt}"},
+            {"role": "user", "content": f"{prompt}"},
             
         ]
         )
